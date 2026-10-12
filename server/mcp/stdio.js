@@ -93,6 +93,7 @@ export function parseArgs(argv) {
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === process.argv[1]) {
+  throw new Error('MCP execution is disabled in this quarantined fork');
   try {
     const options = parseArgs(process.argv.slice(2));
     console.error(
