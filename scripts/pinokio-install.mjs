@@ -4,6 +4,23 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { applyPinokioEnvironment } from './pinokio-environment.mjs';
+
+// Keep secrets out of npm and its install scripts, even when inherited from
+// the parent Pinokio process. This does not sandbox dependency code: install
+// only in an isolated environment without access to private host files.
+const INSTALL_ENV_FIELDS = [
+  'PATH', 'Path', 'HOME', 'TMPDIR', 'TMP', 'TEMP',
+  'SystemRoot', 'WINDIR', 'ComSpec', 'PATHEXT',
+  'APPDATA', 'LOCALAPPDATA', 'USERPROFILE',
+];
+
+export function sanitizedInstallEnvironment(environment = process.env) {
+  const safe = { PUPPETEER_SKIP_DOWNLOAD: '1' };
+  for (const field of INSTALL_ENV_FIELDS) {
+    if (typeof environment[field] === 'string') safe[field] = environment[field];
+  }
+  return safe;
+}
 import { formatSetupReport, inspectSetup, npmProcessSpec } from './setup-doctor.mjs';
 
 const MODULE_PATH = fileURLToPath(import.meta.url);
@@ -13,7 +30,7 @@ const READY_FILE = path.join(ROOT, 'pinokio', '.installed');
 export function runChecked(command, args, { shell = false } = {}) {
   const result = spawnSync(command, args, {
     cwd: ROOT,
-    env: { ...process.env, PUPPETEER_SKIP_DOWNLOAD: '1' },
+    env: sanitizedInstallEnvironment(),
     shell,
     stdio: 'inherit',
   });
@@ -22,10 +39,12 @@ export function runChecked(command, args, { shell = false } = {}) {
 }
 
 export function installPinokioDependencies() {
-  applyPinokioEnvironment();
   rmSync(READY_FILE, { force: true });
   const npm = npmProcessSpec();
   runChecked(npm.command, ['ci'], { shell: npm.shell });
+
+  // Import app credentials only after npm and dependency lifecycle scripts exit.
+  applyPinokioEnvironment();
 
   // Pinokio starts Vite directly and loads only its ENVIRONMENT file plus the
   // normal dotenv ladder. Unlike dev-fresh.sh, it does not import macOS
