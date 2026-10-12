@@ -39,6 +39,7 @@ export function runChecked(command, args, { shell = false } = {}) {
 }
 
 export function installPinokioDependencies() {
+  throw new Error('Dependency installation is disabled while this fork is quarantined. No package manager may run.');
   rmSync(READY_FILE, { force: true });
   const npm = npmProcessSpec();
   runChecked(npm.command, ['ci'], { shell: npm.shell });
