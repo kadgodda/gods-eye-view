@@ -91,35 +91,11 @@ if [[ -z "${GOOGLE_MAPS_API_KEY_ENV}" ]]; then
   GOOGLE_MAPS_API_KEY_ENV="$(read_dotenv_value "GOOGLE_MAPS_API_KEY")"
   GOOGLE_MAPS_API_KEY_ENV_SOURCE="dotenv"
 fi
-GOOGLE_MAPS_API_KEY_KEYCHAIN=""
-GOOGLE_MAPS_API_KEY_SOURCE=""
-if command -v security >/dev/null 2>&1; then
-  for acct in "api-key" "default" "key"; do
-    GOOGLE_MAPS_API_KEY_KEYCHAIN="$(security find-generic-password -s "google-maps-api" -a "${acct}" -w 2>/dev/null || true)"
-    if [[ -n "${GOOGLE_MAPS_API_KEY_KEYCHAIN}" ]]; then
-      GOOGLE_MAPS_API_KEY_SOURCE="keychain:${acct}"
-      break
-    fi
-  done
-fi
-
-if [[ -n "${GOOGLE_MAPS_API_KEY_ENV}" ]]; then
-  GOOGLE_MAPS_API_KEY="${GOOGLE_MAPS_API_KEY_ENV}"
-  GOOGLE_MAPS_API_KEY_SOURCE="${GOOGLE_MAPS_API_KEY_ENV_SOURCE}"
-elif [[ -n "${GOOGLE_MAPS_API_KEY_KEYCHAIN}" ]]; then
-  GOOGLE_MAPS_API_KEY="${GOOGLE_MAPS_API_KEY_KEYCHAIN}"
-else
-  GOOGLE_MAPS_API_KEY=""
-fi
+GOOGLE_MAPS_API_KEY="${GOOGLE_MAPS_API_KEY_ENV}"
+GOOGLE_MAPS_API_KEY_SOURCE="${GOOGLE_MAPS_API_KEY_ENV_SOURCE}"
 if [[ -z "${GOOGLE_MAPS_API_KEY}" ]]; then
   GOOGLE_MAPS_API_KEY_SOURCE="not configured"
 fi
-
-read_keychain_secret() {
-  local service="$1"
-  local account="$2"
-  security find-generic-password -s "$service" -a "$account" -w 2>/dev/null || true
-}
 
 load_opensky_oauth_from_file() {
   local file_path="$1"
@@ -159,56 +135,15 @@ resolve_opensky_credentials() {
       ;;
   esac
 
-  # Explicit env wins, then .env, then the credentials file / Keychain below.
+  # Explicit env wins, then .env, then an explicitly configured credentials file.
   OPENSKY_CLIENT_ID="${OPENSKY_CLIENT_ID:-$(read_dotenv_value "OPENSKY_CLIENT_ID")}"
   OPENSKY_CLIENT_SECRET="${OPENSKY_CLIENT_SECRET:-$(read_dotenv_value "OPENSKY_CLIENT_SECRET")}"
   OPENSKY_USERNAME="${OPENSKY_USERNAME:-$(read_dotenv_value "OPENSKY_USERNAME")}"
   OPENSKY_PASSWORD="${OPENSKY_PASSWORD:-$(read_dotenv_value "OPENSKY_PASSWORD")}"
 
-  if [[ "${OPENSKY_AUTH_MODE}" == "basic" || "${OPENSKY_AUTH_MODE}" == "auto" ]] && [[ -z "${OPENSKY_USERNAME}" ]]; then
-    for svc in "opensky-network" "opensky"; do
-      for acct in "username" "user" "login" "email" "default"; do
-        OPENSKY_USERNAME="$(read_keychain_secret "${svc}" "${acct}")"
-        if [[ -n "${OPENSKY_USERNAME}" ]]; then
-          break 2
-        fi
-      done
-    done
-  fi
-  if [[ "${OPENSKY_AUTH_MODE}" == "basic" || "${OPENSKY_AUTH_MODE}" == "auto" ]] && [[ -z "${OPENSKY_PASSWORD}" ]]; then
-    for svc in "opensky-network" "opensky"; do
-      for acct in "password" "pass" "token" "secret" "default"; do
-        OPENSKY_PASSWORD="$(read_keychain_secret "${svc}" "${acct}")"
-        if [[ -n "${OPENSKY_PASSWORD}" ]]; then
-          break 2
-        fi
-      done
-    done
-  fi
   if [[ "${OPENSKY_AUTH_MODE}" == "oauth" || "${OPENSKY_AUTH_MODE}" == "auto" ]] && [[ -n "${OPENSKY_CREDENTIALS_FILE}" ]]; then
     load_opensky_oauth_from_file "${OPENSKY_CREDENTIALS_FILE}"
   fi
-  if [[ "${OPENSKY_AUTH_MODE}" == "oauth" || "${OPENSKY_AUTH_MODE}" == "auto" ]] && [[ -z "${OPENSKY_CLIENT_ID}" ]]; then
-    for svc in "opensky-network" "opensky"; do
-      for acct in "client_id" "client-id" "client" "api-key"; do
-        OPENSKY_CLIENT_ID="$(read_keychain_secret "${svc}" "${acct}")"
-        if [[ -n "${OPENSKY_CLIENT_ID}" ]]; then
-          break 2
-        fi
-      done
-    done
-  fi
-  if [[ "${OPENSKY_AUTH_MODE}" == "oauth" || "${OPENSKY_AUTH_MODE}" == "auto" ]] && [[ -z "${OPENSKY_CLIENT_SECRET}" ]]; then
-    for svc in "opensky-network" "opensky"; do
-      for acct in "client_secret" "client-secret" "secret"; do
-        OPENSKY_CLIENT_SECRET="$(read_keychain_secret "${svc}" "${acct}")"
-        if [[ -n "${OPENSKY_CLIENT_SECRET}" ]]; then
-          break 2
-        fi
-      done
-    done
-  fi
-
   case "${OPENSKY_AUTH_MODE}" in
     basic)
       OPENSKY_CLIENT_ID=""
@@ -229,20 +164,13 @@ resolve_opensky_credentials() {
 
 resolve_opensky_credentials
 
-# Optional keys: explicit env wins, followed by .env and Keychain fallback.
-# Add to Keychain with e.g.:
-#   security add-generic-password -U -s "openai-api" -a "api-key" -w
+# Optional keys: explicit env wins, followed by .env. No Keychain lookups.
 OPENAI_API_KEY="${OPENAI_API_KEY:-$(read_dotenv_value "OPENAI_API_KEY")}"
 AISSTREAM_API_KEY="${AISSTREAM_API_KEY:-$(read_dotenv_value "AISSTREAM_API_KEY")}"
 CESIUM_ION_TOKEN="${CESIUM_ION_TOKEN:-$(read_dotenv_value "CESIUM_ION_TOKEN")}"
 LL2_API_TOKEN="${LL2_API_TOKEN:-$(read_dotenv_value "LL2_API_TOKEN")}"
 TOMTOM_API_KEY="${TOMTOM_API_KEY:-$(read_dotenv_value "TOMTOM_API_KEY")}"
 FIRMS_MAP_KEY="${FIRMS_MAP_KEY:-$(read_dotenv_value "FIRMS_MAP_KEY")}"
-OPENAI_API_KEY="${OPENAI_API_KEY:-$(read_keychain_secret "openai-api" "api-key")}"
-AISSTREAM_API_KEY="${AISSTREAM_API_KEY:-$(read_keychain_secret "aisstream-api" "api-key")}"
-CESIUM_ION_TOKEN="${CESIUM_ION_TOKEN:-$(read_keychain_secret "cesium-ion" "token")}"
-TOMTOM_API_KEY="${TOMTOM_API_KEY:-$(read_keychain_secret "tomtom-api" "api-key")}"
-FIRMS_MAP_KEY="${FIRMS_MAP_KEY:-$(read_keychain_secret "firms-map" "map-key")}"
 
 if [[ ! -f "$SOURCE_ROOT/src/data/cctv.js" ]]; then
   echo "error: expected CCTV layer file missing: src/data/cctv.js"
