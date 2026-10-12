@@ -10,37 +10,13 @@ PORT="${PORT:-4173}"
 HOST="${HOST:-localhost}"
 
 GOOGLE_MAPS_API_KEY_ENV="${GOOGLE_MAPS_API_KEY:-}"
-GOOGLE_MAPS_API_KEY_KEYCHAIN=""
-GOOGLE_MAPS_API_KEY_SOURCE=""
-if command -v security >/dev/null 2>&1; then
-  for acct in "api-key" "default" "key"; do
-    GOOGLE_MAPS_API_KEY_KEYCHAIN="$(security find-generic-password -s "google-maps-api" -a "${acct}" -w 2>/dev/null || true)"
-    if [[ -n "${GOOGLE_MAPS_API_KEY_KEYCHAIN}" ]]; then
-      GOOGLE_MAPS_API_KEY_SOURCE="keychain:${acct}"
-      break
-    fi
-  done
-fi
-
-if [[ -n "${GOOGLE_MAPS_API_KEY_KEYCHAIN}" ]]; then
-  GOOGLE_MAPS_API_KEY="${GOOGLE_MAPS_API_KEY_KEYCHAIN}"
-elif [[ -n "${GOOGLE_MAPS_API_KEY_ENV}" ]]; then
-  GOOGLE_MAPS_API_KEY="${GOOGLE_MAPS_API_KEY_ENV}"
-  GOOGLE_MAPS_API_KEY_SOURCE="env"
-else
-  GOOGLE_MAPS_API_KEY=""
-fi
+GOOGLE_MAPS_API_KEY="${GOOGLE_MAPS_API_KEY_ENV}"
+GOOGLE_MAPS_API_KEY_SOURCE="env"
 if [[ -z "${GOOGLE_MAPS_API_KEY}" ]]; then
   echo "error: Google Maps API key missing."
-  echo "set GOOGLE_MAPS_API_KEY in env, or add Keychain item: service=google-maps-api account=api-key"
+  echo "set GOOGLE_MAPS_API_KEY in env"
   exit 1
 fi
-
-read_keychain_secret() {
-  local service="$1"
-  local account="$2"
-  security find-generic-password -s "$service" -a "$account" -w 2>/dev/null || true
-}
 
 load_opensky_oauth_from_file() {
   local file_path="$1"
@@ -84,50 +60,9 @@ resolve_opensky_credentials() {
   OPENSKY_USERNAME="${OPENSKY_USERNAME:-}"
   OPENSKY_PASSWORD="${OPENSKY_PASSWORD:-}"
 
-  if [[ "${OPENSKY_AUTH_MODE}" == "basic" || "${OPENSKY_AUTH_MODE}" == "auto" ]] && [[ -z "${OPENSKY_USERNAME}" ]]; then
-    for svc in "opensky-network" "opensky"; do
-      for acct in "username" "user" "login" "email" "default"; do
-        OPENSKY_USERNAME="$(read_keychain_secret "${svc}" "${acct}")"
-        if [[ -n "${OPENSKY_USERNAME}" ]]; then
-          break 2
-        fi
-      done
-    done
-  fi
-  if [[ "${OPENSKY_AUTH_MODE}" == "basic" || "${OPENSKY_AUTH_MODE}" == "auto" ]] && [[ -z "${OPENSKY_PASSWORD}" ]]; then
-    for svc in "opensky-network" "opensky"; do
-      for acct in "password" "pass" "token" "secret" "default"; do
-        OPENSKY_PASSWORD="$(read_keychain_secret "${svc}" "${acct}")"
-        if [[ -n "${OPENSKY_PASSWORD}" ]]; then
-          break 2
-        fi
-      done
-    done
-  fi
   if [[ "${OPENSKY_AUTH_MODE}" == "oauth" || "${OPENSKY_AUTH_MODE}" == "auto" ]] && [[ -n "${OPENSKY_CREDENTIALS_FILE}" ]]; then
     load_opensky_oauth_from_file "${OPENSKY_CREDENTIALS_FILE}"
   fi
-  if [[ "${OPENSKY_AUTH_MODE}" == "oauth" || "${OPENSKY_AUTH_MODE}" == "auto" ]] && [[ -z "${OPENSKY_CLIENT_ID}" ]]; then
-    for svc in "opensky-network" "opensky"; do
-      for acct in "client_id" "client-id" "client" "api-key"; do
-        OPENSKY_CLIENT_ID="$(read_keychain_secret "${svc}" "${acct}")"
-        if [[ -n "${OPENSKY_CLIENT_ID}" ]]; then
-          break 2
-        fi
-      done
-    done
-  fi
-  if [[ "${OPENSKY_AUTH_MODE}" == "oauth" || "${OPENSKY_AUTH_MODE}" == "auto" ]] && [[ -z "${OPENSKY_CLIENT_SECRET}" ]]; then
-    for svc in "opensky-network" "opensky"; do
-      for acct in "client_secret" "client-secret" "secret"; do
-        OPENSKY_CLIENT_SECRET="$(read_keychain_secret "${svc}" "${acct}")"
-        if [[ -n "${OPENSKY_CLIENT_SECRET}" ]]; then
-          break 2
-        fi
-      done
-    done
-  fi
-
   case "${OPENSKY_AUTH_MODE}" in
     basic)
       OPENSKY_CLIENT_ID=""
