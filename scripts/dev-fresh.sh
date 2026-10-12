@@ -260,9 +260,6 @@ fi
 # Operators must explicitly stop the process that owns the port.
 echo "Preserving existing processes; startup will fail if port ${PORT} is occupied."
 
-echo "Clearing Vite cache..."
-rm -rf node_modules/.vite
-
 echo "Starting fresh God's Eye View dev server..."
 case "${HOST}" in
   localhost|127.0.0.1|::1)
