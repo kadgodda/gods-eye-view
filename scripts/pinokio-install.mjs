@@ -4,6 +4,7 @@ import { spawnSync } from 'node:child_process';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { applyPinokioEnvironment } from './pinokio-environment.mjs';
+import { formatSetupReport, inspectSetup, npmProcessSpec } from './setup-doctor.mjs';
 
 // Keep secrets out of npm and its install scripts, even when inherited from
 // the parent Pinokio process. This does not sandbox dependency code: install
@@ -21,7 +22,6 @@ export function sanitizedInstallEnvironment(environment = process.env) {
   }
   return safe;
 }
-import { formatSetupReport, inspectSetup, npmProcessSpec } from './setup-doctor.mjs';
 
 const MODULE_PATH = fileURLToPath(import.meta.url);
 const ROOT = realpathSync(path.resolve(path.dirname(MODULE_PATH), '..'));
