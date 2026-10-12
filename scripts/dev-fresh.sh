@@ -255,18 +255,10 @@ if ! grep -q "return createApplicationCatalog(" "$SOURCE_ROOT/src/standalone/cat
   exit 1
 fi
 
-echo "Stopping all existing God's Eye View dev servers..."
-pkill -f "${ROOT_DIR}/node_modules/.bin/vite" >/dev/null 2>&1 || true
-pkill -f "${ROOT_DIR}/node_modules/vite/bin/vite.js" >/dev/null 2>&1 || true
-
-# Also clear the requested port in case it is held by a stale wrapper or a
-# server started through a different package-manager command.
-if command -v lsof >/dev/null 2>&1; then
-  PIDS="$(lsof -tiTCP:${PORT} -sTCP:LISTEN 2>/dev/null || true)"
-  if [[ -n "${PIDS}" ]]; then
-    echo "${PIDS}" | xargs kill -9 >/dev/null 2>&1 || true
-  fi
-fi
+# Do not terminate previously running servers or unrelated processes.
+# Vite's --strictPort option below makes an occupied port a hard failure.
+# Operators must explicitly stop the process that owns the port.
+echo "Preserving existing processes; startup will fail if port ${PORT} is occupied."
 
 echo "Clearing Vite cache..."
 rm -rf node_modules/.vite
@@ -423,4 +415,4 @@ put_env_if_set LL2_API_TOKEN "${LL2_API_TOKEN}"
 put_env GEV_LAUNCHER "dev-fresh"
 put_env GEV_KEY_SETUP_EXTERNAL_KEYS "${KEY_SETUP_EXTERNAL_KEYS_CSV}"
 
-env ${DEV_UNSET[@]+"${DEV_UNSET[@]}"} "${DEV_ENV[@]}" "${DEV_COMMAND[@]}" --host "${HOST}" --port "${PORT}" --force
+env ${DEV_UNSET[@]+"${DEV_UNSET[@]}"} "${DEV_ENV[@]}" "${DEV_COMMAND[@]}" --host "${HOST}" --port "${PORT}" --strictPort --force
