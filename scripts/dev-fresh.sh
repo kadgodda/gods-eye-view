@@ -9,7 +9,7 @@ PORT="${PORT:-4173}"
 # Local-only by default: the dev server brokers configured API keys, so it
 # should not be reachable from the network unless explicitly requested.
 # Set HOST=0.0.0.0 to opt in to LAN exposure (a warning is printed).
-HOST="${HOST:-localhost}"
+HOST="127.0.0.1" # Lock untrusted fork to loopback regardless of parent environment.
 # CCTV source packs (all keyless): Austin (~815 live upstream), Caltrans
 # districts 4,7,11,3 = SF/LA/San Diego/Sacramento (~1,860 live upstream),
 # TfL London JamCams (~870 live upstream), Ontario 511 (~944 live upstream,
