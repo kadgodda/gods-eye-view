@@ -7,7 +7,7 @@ cd "$ROOT_DIR"
 
 PORT="${PORT:-4173}"
 # Local-only by default; set HOST=0.0.0.0 explicitly to expose on the LAN.
-HOST="${HOST:-localhost}"
+HOST="127.0.0.1" # Lock untrusted fork to loopback regardless of parent environment.
 
 GOOGLE_MAPS_API_KEY_ENV="${GOOGLE_MAPS_API_KEY:-}"
 GOOGLE_MAPS_API_KEY="${GOOGLE_MAPS_API_KEY_ENV}"
