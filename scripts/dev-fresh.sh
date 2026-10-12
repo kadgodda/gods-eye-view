@@ -8,7 +8,7 @@ cd "$ROOT_DIR"
 PORT="${PORT:-4173}"
 # Local-only by default: the dev server brokers configured API keys, so it
 # should not be reachable from the network unless explicitly requested.
-# Set HOST=0.0.0.0 to opt in to LAN exposure (a warning is printed).
+# LAN binding is disabled in this quarantined fork.
 HOST="127.0.0.1" # Lock untrusted fork to loopback regardless of parent environment.
 # CCTV source packs (all keyless): Austin (~815 live upstream), Caltrans
 # districts 4,7,11,3 = SF/LA/San Diego/Sacramento (~1,860 live upstream),
@@ -191,7 +191,7 @@ echo "Preserving existing processes; startup will fail if port ${PORT} is occupi
 echo "Starting fresh God's Eye View dev server..."
 case "${HOST}" in
   localhost|127.0.0.1|::1)
-    echo "Local-only mode: reachable at http://localhost:${PORT}/ (set HOST=0.0.0.0 for LAN)"
+    echo "Local-only mode: reachable at http://localhost:${PORT}/"
     ;;
   *)
     LAN_IP=""
