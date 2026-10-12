@@ -119,18 +119,10 @@ export function resolveOpenSkyAuthMode({
   return OPENSKY_AUTH_MODES.has(mode) ? mode : OPENSKY_AUTH_MODE_DEFAULT;
 }
 
-function hasKeychainItem(service, account) {
-  if (process.platform !== 'darwin') return false;
-  const result = spawnSync('security', [
-    'find-generic-password',
-    '-s', service,
-    '-a', account,
-  ], { stdio: 'ignore' });
-  return result.status === 0;
-}
+function hasKeychainItem() { return false; }
 
 export function resolveCredential(spec, {
-  includeKeychain = true,
+  includeKeychain = false,
   authoritativeEnvironment = false,
   environment = process.env,
   rootDir = ROOT,
@@ -188,7 +180,7 @@ export function buildCapabilitySummary(
   };
 }
 
-export function inspectSetup({ includeKeychain = true, authoritativeEnvironment = false, rootDir = ROOT } = {}) {
+export function inspectSetup({ includeKeychain = false, authoritativeEnvironment = false, rootDir = ROOT } = {}) {
   const node = classifyNodeVersion();
   const npm = npmProcessSpec();
   const npmResult = spawnSync(npm.command, ['--version'], {
