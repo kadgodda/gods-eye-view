@@ -1,4 +1,4 @@
-export const CLOUD_VOICE_AUTH_MODES = Object.freeze(['api-key', 'oauth']);
+export const CLOUD_VOICE_AUTH_MODES = Object.freeze(['api-key']);
 export const DEFAULT_CLOUD_VOICE_AUTH_MODE = 'api-key';
 export const CLOUD_VOICE_AUTH_STORAGE_KEY = 'godsEyeView.voice.cloudAuth';
 
