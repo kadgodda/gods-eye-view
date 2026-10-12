@@ -132,9 +132,6 @@ export function resolveCredential(spec, {
   if (isConfiguredValue(environment[spec.name])) return { configured: true, source: 'environment' };
   if (authoritativeEnvironment && environmentDefinesKey) return { configured: false, source: null };
   if (isConfiguredValue(readDoctorDotenvValue(spec.name, rootDir))) return { configured: true, source: 'dotenv files' };
-  if (includeKeychain && spec.keychain.some(([service, account]) => keychainLookup(service, account))) {
-    return { configured: true, source: 'macOS Keychain' };
-  }
   return { configured: false, source: null };
 }
 
