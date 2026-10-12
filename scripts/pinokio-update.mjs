@@ -216,6 +216,7 @@ export function updateFromRemote(io = {}) {
  * @returns {{apply: string|null, fallback: boolean, stopped?: boolean}} The plan.
  */
 export function runPinokioUpdate(io = {}) {
+  throw new Error('Remote updates and dependency reinstalls are disabled in this quarantined fork.');
   const {
     install = installPinokioDependencies,
     fail = (code) => process.exit(code),
