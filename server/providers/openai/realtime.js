@@ -49,7 +49,7 @@ function requestQuery(req) {
 
 function resolveRealtimeAuthMode(query) {
   const requested = String(query.get('auth') || 'api-key').toLowerCase();
-  if (requested === 'api-key' || requested === 'oauth') return requested;
+  if (requested === 'api-key') return requested;
   return null;
 }
 
